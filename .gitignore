@@ -1,9 +1,8 @@
-# Rust build artifacts
-/app/target/
+target/
 **/*.rs.bk
 
 # wasm-pack output
-/pkg/
+static/
 
 # VSCode or other IDE/editor
 .vscode/
@@ -14,6 +13,3 @@
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# Static server files (optional)
-static/pkg/
