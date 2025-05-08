@@ -1,0 +1,19 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# wasm-pack output
+/pkg/
+
+# VSCode or other IDE/editor
+.vscode/
+.idea/
+*.sw?
+*.bak
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Static server files (optional)
+static/pkg/
