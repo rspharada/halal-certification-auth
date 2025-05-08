@@ -1,25 +1,13 @@
-use yew::prelude::*;
+mod app;
+mod pages;
+mod routes;
+mod types;
+// mod components;
+// mod types;
+// mod utils;
 
-#[function_component(App)]
-fn app() -> Html {
-    html! {
-        <>
-            <h1>{ "RustConf Explorer" }</h1>
-            <div>
-                <h3>{"Videos to watch"}</h3>
-                <p>{ "John Doe: Building and breaking things" }</p>
-                <p>{ "Jane Smith: The development process" }</p>
-                <p>{ "Matt Miller: The Web 7.0" }</p>
-                <p>{ "Tom Jerry: Mouseless development" }</p>
-            </div>
-            <div>
-                <h3>{ "John Doe: Building and breaking things" }</h3>
-                <img src="https://placehold.co/640x360.png?text=Video+Player+Placeholder" alt="video thumbnail" />
-            </div>
-        </>
-    }
-}
-
+// エントリーポイント：Yewアプリケーションの起動
 fn main() {
-    yew::Renderer::<App>::new().render();
+    // Appコンポーネントをマウント（HTMLの<body><main>に描画）
+    yew::Renderer::<app::App>::new().render();
 }
