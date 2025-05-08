@@ -1,8 +1,9 @@
+dist/
 target/
 **/*.rs.bk
 
 # wasm-pack output
-static/
+static/pkg/
 
 # VSCode or other IDE/editor
 .vscode/
