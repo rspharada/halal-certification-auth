@@ -1,0 +1,7 @@
+# Trunk.toml
+[build]
+dist = "dist" # 出力先（任意）
+
+[serve]
+open = true
+port = 3000
