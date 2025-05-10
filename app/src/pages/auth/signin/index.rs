@@ -98,3 +98,32 @@ pub fn signin_page() -> Html {
         </form>
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gloo::utils::document;
+    use wasm_bindgen_test::*;
+    use yew::Renderer;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[allow(dead_code)]
+    #[wasm_bindgen_test]
+    fn it_renders_signin_page() {
+        // テスト用のルート要素を作成し、bodyに追加
+        let root = document().create_element("div").unwrap();
+        document().body().unwrap().append_child(&root).unwrap();
+
+        // SigninPage をレンダリング
+        Renderer::<SigninPage>::with_root(root.into()).render();
+
+        // DOM内に "サインイン" テキストが含まれているか確認
+        let body_html = document().body().unwrap().inner_html();
+        assert!(
+            body_html.contains("サインイン"),
+            "ページに 'サインイン' が含まれていません。\nHTML内容:\n{}",
+            body_html
+        );
+    }
+}

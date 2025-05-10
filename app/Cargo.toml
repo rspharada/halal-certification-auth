@@ -11,4 +11,13 @@ serde = { version = "1", features = ["derive"] }
 gloo = { version = "0.11.0", features = ["net"] }
 wasm-bindgen-futures = "0.4"
 serde_json = "1.0"
-web-sys = { version = "0.3", features = ["Document"] }
+web-sys = { version = "0.3", features = [
+    "HtmlFormElement",  # ✅ これを追加
+    "HtmlInputElement", # 他にもよく使うやつ
+    "Document",
+    "Element",
+    "Event",
+    "Node",
+    "Window",
+] }
+wasm-bindgen-test = "0.3"

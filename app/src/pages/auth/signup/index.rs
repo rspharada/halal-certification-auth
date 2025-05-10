@@ -20,7 +20,6 @@ use yew::prelude::*;
 /// サインアップフォームの送信データ構造
 #[derive(Serialize)]
 struct SignupForm {
-    username: String,
     email: String,
     password: String,
 }
@@ -29,7 +28,6 @@ struct SignupForm {
 #[function_component(SignupPage)]
 pub fn signup_page() -> Html {
     // 入力フィールドごとの状態管理（Yewのuse_stateを使用）
-    let username = use_state(|| "".to_string());
     let email = use_state(|| "".to_string());
     let password = use_state(|| "".to_string());
     let message = use_state(|| "".to_string()); // 結果メッセージ用
@@ -47,7 +45,6 @@ pub fn signup_page() -> Html {
     // フォーム送信時の非同期処理を定義（POSTリクエスト）
     let onsubmit = {
         // 状態をクロージャ内にmoveで取り込む
-        let username = username.clone();
         let email = email.clone();
         let password = password.clone();
         let message = message.clone();
@@ -57,7 +54,6 @@ pub fn signup_page() -> Html {
 
             // 送信用データの作成
             let form = SignupForm {
-                username: username.to_string(),
                 email: email.to_string(),
                 password: password.to_string(),
             };
@@ -88,13 +84,6 @@ pub fn signup_page() -> Html {
             <h2>{ "サインアップ" }</h2>
 
             <input
-                type="text"
-                placeholder="ユーザー名"
-                value={(*username).clone()}
-                oninput={handle_input(username.clone())}
-            />
-
-            <input
                 type="email"
                 placeholder="メールアドレス"
                 value={(*email).clone()}
@@ -113,5 +102,34 @@ pub fn signup_page() -> Html {
             // 結果メッセージの表示
             <p>{ &*message }</p>
         </form>
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gloo::utils::document;
+    use wasm_bindgen_test::*;
+    use yew::Renderer;
+
+    wasm_bindgen_test_configure!(run_in_browser);
+
+    #[allow(dead_code)]
+    #[wasm_bindgen_test]
+    fn it_renders_signup_page() {
+        // DOMノードを動的に作成
+        let root = document().create_element("div").unwrap();
+        document().body().unwrap().append_child(&root).unwrap();
+
+        // SignupPageを仮想DOMに描画
+        Renderer::<SignupPage>::with_root(root.into()).render();
+
+        // ページに特定のテキストが含まれているか確認
+        let body_html = document().body().unwrap().inner_html();
+        assert!(
+            body_html.contains("サインアップ"),
+            "Expected 'サインアップ' in HTML, but got: {}",
+            body_html
+        );
     }
 }

@@ -1,40 +1,61 @@
 //! routes.rs
 //!
-//! このファイルは Yew Router を用いたルーティング定義を行うモジュールです。
-//!
-//! 主な役割：
-//! - ルートパス（`/signup` など）とページコンポーネントのマッピング
-//! - `Route` 列挙型：URLと各ページの対応付け
-//! - `switch` 関数：現在のルートに基づいて対応するページコンポーネントを描画
-//!
-//! このルーティング設定は、`app.rs` 内で `<Switch<Route>>` に渡されて使用されます。
-//!
-//! 関連ファイル：
-//! - `pages/signup.rs`: Signupページの実装
-//! - `app.rs`: `Switch<Route>` でこの `Route` と `switch()` を使用
+//! Yew Router を使ったアプリのルーティング定義。
+//! 各画面に対して、URLパスとのマッピングと画面描画処理を提供します。
 
-use crate::pages::signin::SigninPage;
-use crate::pages::signup::SignupPage;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+// 各ページを use でインポート
+use crate::pages::auth::signup::confirm::ConfirmPage;
+use crate::pages::auth::signup::index::SignupPage;
+
+use crate::pages::auth::signin::index::SigninPage;
+use crate::pages::auth::signin::mfa::SigninMfaPage;
+
+use crate::pages::auth::password_reset::mfa::PasswordResetMfaPage;
+use crate::pages::auth::password_reset::request::PasswordResetRequestPage;
+use crate::pages::auth::password_reset::reset::PasswordResetPage;
+
+/// アプリ内のルーティング定義
 #[derive(Routable, Clone, PartialEq, Debug)]
 pub enum Route {
-    // #[at("/")]
-    // Home,
     #[at("/signup")]
     Signup,
+
+    #[at("/confirm")]
+    ConfirmAccount,
+
     #[at("/signin")]
     Signin,
+
+    #[at("/mfa")]
+    SigninMfa,
+
+    #[at("/forgot")]
+    PasswordResetRequest,
+
+    #[at("/forgot/mfa")]
+    PasswordResetMfa,
+
+    #[at("/reset")]
+    PasswordReset,
+
+    #[not_found]
     #[at("/404")]
     NotFound,
 }
 
-/// `Route` に基づいて対応する HTML を返す関数
-pub fn switch(routes: Route) -> Html {
-    match routes {
+/// `Route` に応じて描画するコンポーネントを返す関数
+pub fn switch(route: Route) -> Html {
+    match route {
         Route::Signup => html! { <SignupPage /> },
+        Route::ConfirmAccount => html! { <ConfirmPage /> },
         Route::Signin => html! { <SigninPage /> },
+        Route::SigninMfa => html! { <SigninMfaPage /> },
+        Route::PasswordResetRequest => html! { <PasswordResetRequestPage /> },
+        Route::PasswordResetMfa => html! { <PasswordResetMfaPage /> },
+        Route::PasswordReset => html! { <PasswordResetPage /> },
         Route::NotFound => html! { <h1>{ "ページが見つかりません" }</h1> },
     }
 }

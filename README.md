@@ -26,5 +26,18 @@ app
 ## 静的ファイルの配信
 
 ```console
-trunk serve --open
+trunk serve --open --port XXXX
 ```
+
+## テスト実行（ブラウザ上）
+
+```console
+wasm-pack test --headless --chrome
+```
+--headless を外すとブラウザが開きます。
+
+|   **状況**   |   **対応方法**   |
+| --- | --- |
+|   ブラウザ開かずに実行したい   |   \--headless を指定   |
+|   コンソールがエラーになる場合   |   cargo clean, wasm-pack build でリセット   |
+|   CLIだけで流したい（CI含む）   |   wasm-pack test --headless --chrome   |
