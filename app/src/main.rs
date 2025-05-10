@@ -2,9 +2,8 @@ mod app;
 mod pages;
 mod routes;
 mod types;
+mod utils;
 // mod components;
-// mod types;
-// mod utils;
 
 // エントリーポイント：Yewアプリケーションの起動
 fn main() {
