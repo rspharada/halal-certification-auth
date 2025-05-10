@@ -23,8 +23,8 @@ def lambda_handler(event, context):
         if not email or not code or not session:
             return build_response(400, {"error": "Missing email, code or session"})
 
-        response = cognito.admin_respond_to_auth_challenge(
-            UserPoolId=USER_POOL_ID,
+        response = cognito.respond_to_auth_challenge(
+            # UserPoolId=USER_POOL_ID,
             ClientId=CLIENT_ID,
             ChallengeName="EMAIL_OTP",
             ChallengeResponses={
