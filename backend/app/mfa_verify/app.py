@@ -6,11 +6,11 @@ import boto3
 cognito = boto3.client("cognito-idp")
 
 ENV = os.getenv("ENV", "local")
-CLIENT_ID = os.environ["COGNITO_APP_CLIENT_ID"]
-CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
-USER_POOL_ID = os.environ["COGNITO_USER_POOL_ID"]
 DOMAIN = os.environ["DOMAIN"]
 REDIRECT_PATH = os.environ["REDIRECT_PATH"]
+USER_POOL_ID = os.environ["COGNITO_USER_POOL_ID"]
+CLIENT_ID = os.environ["COGNITO_APP_CLIENT_ID"]
+CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
 scheme = "http" if ENV == "local" else "https"
 
 def lambda_handler(event, context):
