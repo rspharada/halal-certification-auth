@@ -102,7 +102,6 @@ Resources:
       Environment:
         Variables:
           ENV: !Ref Environment
-          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
           COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
           COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
     Metadata:
@@ -114,8 +113,8 @@ Resources:
   SignupConfirmFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      FunctionName: !Sub "halmark-${Environment}-confirm signup" # Lambda関数名を環境ごとに設定
-      Description: !Sub "[halmark][${Environment}] Confirm Signup 関数"
+      FunctionName: !Sub "halmark-${Environment}-signup-confirm" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Signup Confirm 関数"
       PackageType: Image
       Architectures:
         - x86_64
@@ -129,12 +128,37 @@ Resources:
       Environment:
         Variables:
           ENV: !Ref Environment
-          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
           COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
           COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
     Metadata:
       Dockerfile: Dockerfile
       DockerContext: ./app/signup_confirm
+      DockerTag: python3.13-v1
+
+  # ResendCodeFunctionは、AWS Lambda関数を定義します
+  ResendCodeFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-resend-code" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Resend Code 関数"
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
+      Events:
+        SignupConfirm:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /auth/resend-code
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/resend_code
       DockerTag: python3.13-v1
 
   # SigninFunctionは、AWS Lambda関数を定義します
@@ -156,7 +180,6 @@ Resources:
       Environment:
         Variables:
           ENV: !Ref Environment
-          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
           COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
           COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
     Metadata:
@@ -193,31 +216,68 @@ Resources:
       DockerContext: ./app/mfa_verify
       DockerTag: python3.13-v1
 
+  ForgotPasswordFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-forgot-password" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Forgot Password 関数"
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
+      Events:
+        Signin:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /auth/forgot-password
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/forgot_password
+      DockerTag: python3.13-v1
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   SignupApi:
-    Description: API Gateway endpoint URL for Prod stage for Signup function
+    Description: API Gateway endpoint URL for Signup function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signup"
   SignupConfirmApi:
-    Description: API Gateway endpoint URL for Prod stage for Confirm Signup function
+    Description: API Gateway endpoint URL for Confirm Signup function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signup/confirm"
+  ResendCodeApi:
+    Description: API Gateway endpoint URL for Resend Code function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/resend-code"
   SigninApi:
-    Description: API Gateway endpoint URL for Prod stage for Signin function
+    Description: API Gateway endpoint URL for Signin function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signin"
   MfaVerifyApi:
-    Description: API Gateway endpoint URL for Prod stage for Mfa verify function
+    Description: API Gateway endpoint URL for Mfa verify function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/mfa"
+  ForgotPasswordApi:
+    Description: API Gateway endpoint URL for Forgot Password function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/forgot-password"
   SignupFunction:
     Description: Signup Lambda Function ARN
     Value: !GetAtt SignupFunction.Arn
   SignupConfirmFunction:
     Description: Confirm Signup Lambda Function ARN
     Value: !GetAtt SignupConfirmFunction.Arn
+  ResendCodeFunction:
+    Description: Signup Lambda Function ARN
+    Value: !GetAtt ResendCodeFunction.Arn
   SigninFunction:
     Description: Signin Lambda Function ARN
     Value: !GetAtt SigninFunction.Arn
   MfaVerifyFunction:
     Description: Signin Lambda Function ARN
     Value: !GetAtt MfaVerifyFunction.Arn
+  ForgotPasswordFunction:
+    Description: Signin Lambda Function ARN
+    Value: !GetAtt ForgotPasswordFunction.Arn

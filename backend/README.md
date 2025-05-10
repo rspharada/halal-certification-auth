@@ -15,6 +15,9 @@ sam local invoke {関数名} --event ./events/{イベント名}.json
 # [SignupFunction]
 sam local invoke SignupFunction --event ./events/event_signup.json --env-vars=env.local.json --profile verify
 
+# [ResendCodeFunction]
+sam local invoke ResendCodeFunction --event ./events/event_resend_code.json --env-vars=env.local.json --profile verify
+
 # [SignupConfirmFunction]
 sam local invoke SignupConfirmFunction --event ./events/event_signup_confirm.json --env-vars=env.local.json --profile verify
 
@@ -24,6 +27,8 @@ sam local invoke SigninFunction --event ./events/event_signin.json --env-vars=en
 # [MfaVerifyFunction]
 sam local invoke MfaVerifyFunction --event ./events/event_mfa_verify.json --env-vars=env.local.json --profile verify
 
+# [ForgotPasswordFunction]
+sam local invoke ForgotPasswordFunction --event ./events/event_forgot_password.json --env-vars=env.local.json --profile verify
 ```
 
 ```bash

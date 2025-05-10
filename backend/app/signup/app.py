@@ -5,7 +5,6 @@ import boto3
 
 cognito = boto3.client("cognito-idp")
 
-USER_POOL_ID = os.environ["COGNITO_USER_POOL_ID"]
 CLIENT_ID = os.environ["COGNITO_APP_CLIENT_ID"]
 CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
 

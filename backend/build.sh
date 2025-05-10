@@ -7,6 +7,8 @@ TARGETS=(
   signup
   signup_confirm
   mfa_verify
+  resend_code
+  forgot_password
   # ここに追加していける
 )
 
