@@ -3,9 +3,9 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   python3.13
 
-  SAM Template for backend
+  SAM Template for Halmark 認証基盤（Python 3.13 / コンテナイメージ）
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+# API Gateway 全体に適用される CORS 設定
 Globals:
   Api:
     Cors:
@@ -14,7 +14,7 @@ Globals:
       AllowHeaders: "'Content-Type,Authorization,Cookie'"
       AllowCredentials: true
 
-# Parametersセクションは、デプロイ時に指定可能な入力パラメータを定義します
+# デプロイ時に渡す各種環境変数の定義
 Parameters:
   Environment:
     Type: String
@@ -45,8 +45,23 @@ Parameters:
     Type: String
     Description: Cognito App Client Secret
 
+# 以下の Resources セクションで、各種 Lambda 関数と IAM ロールなどを定義します。
+# - SignupFunction: サインアップ（ユーザー登録）処理
+# - SignupConfirmFunction: 確認コードを用いた仮登録 → 本登録確定
+# - ResendCodeFunction: 確認コードの再送
+# - SigninFunction: パスワード認証によるサインイン処理
+# - MfaVerifyFunction: サインイン後のMFAコード検証とトークン発行
+# - ForgotPasswordFunction: パスワードリセット申請（コード送信）
+# - ForgotPasswordConfirmFunction: パスワード再設定（コードと新パスワード）
+
+# IAM ロール定義
+# Lambda関数が CloudWatch Logs および Cognito 操作用に使用
+# 各関数は Docker イメージで構成されており、アーキテクチャは x86_64
+
+# 各 Lambda 関数定義はこのあとに続きます
+# コメントや Description は必要に応じて個別関数へも追加可能です
 Resources:
-  # Lambda関数が実行時に利用するIAMロールを定義します
+  # LambdaExecutionRoleは、Lambda関数が使用するIAMロールを定義します
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -83,7 +98,7 @@ Resources:
                   - cognito-idp:AdminSetUserPassword
                 Resource: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}"
 
-  # SingupFunctionは、AWS Lambda関数を定義します
+  # SignupFunctionは、signup（ユーザー登録）処理を行うAWS Lambda関数を定義します
   SignupFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -109,12 +124,12 @@ Resources:
       DockerContext: ./app/signup
       DockerTag: python3.13-v1
 
-  # SignupConfirmFunctionは、AWS Lambda関数を定義します
+  # SignupFunctionConfirmは、signup（ユーザー登録）確認処理を行うAWS Lambda関数を定義します
   SignupConfirmFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      FunctionName: !Sub "halmark-${Environment}-signup-confirm" # Lambda関数名を環境ごとに設定
-      Description: !Sub "[halmark][${Environment}] Signup Confirm 関数"
+      FunctionName: !Sub "halmark-${Environment}-confirm-signup" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Confirm Signup 関数"
       PackageType: Image
       Architectures:
         - x86_64
@@ -135,7 +150,7 @@ Resources:
       DockerContext: ./app/signup_confirm
       DockerTag: python3.13-v1
 
-  # ResendCodeFunctionは、AWS Lambda関数を定義します
+  # ResendCodeFunctionは、signup（ユーザー登録）確認コードを再送するAWS Lambda関数を定義します
   ResendCodeFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -161,7 +176,7 @@ Resources:
       DockerContext: ./app/resend_code
       DockerTag: python3.13-v1
 
-  # SigninFunctionは、AWS Lambda関数を定義します
+  # SigninFunctionは、signin（ユーザー認証）処理を行うAWS Lambda関数を定義します
   SigninFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -187,7 +202,7 @@ Resources:
       DockerContext: ./app/signin
       DockerTag: python3.13-v1
 
-  # MfaVerifyFunctionは、AWS Lambda関数を定義します
+  # MfaVerifyFunctionは、MFA（多要素認証）検証を行うAWS Lambda関数を定義します
   MfaVerifyFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -216,6 +231,7 @@ Resources:
       DockerContext: ./app/mfa_verify
       DockerTag: python3.13-v1
 
+  # ForgotPasswordFunctionは、パスワード再設定コード送信を行うAWS Lambda関数を定義します
   ForgotPasswordFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -241,43 +257,87 @@ Resources:
       DockerContext: ./app/forgot_password
       DockerTag: python3.13-v1
 
+  # ForgotPasswordConfirmFunctionは、パスワード再設定コードによる変更確定を行うAWS Lambda関数を定義します
+  ForgotPasswordConfirmFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-confirm-forgot-password" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Confirm Forgot Password 関数"
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
+      Events:
+        Signin:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /auth/forgot-password/confirm
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/forgot_password_confirm
+      DockerTag: python3.13-v1
+
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  # API Gateway の各認証エンドポイントURLを出力
   SignupApi:
-    Description: API Gateway endpoint URL for Signup function
+    Description: 新規ユーザー登録（サインアップ）用の API Gateway エンドポイント
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signup"
+
   SignupConfirmApi:
-    Description: API Gateway endpoint URL for Confirm Signup function
+    Description: サインアップ確認コードを検証する API エンドポイント
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signup/confirm"
+
   ResendCodeApi:
-    Description: API Gateway endpoint URL for Resend Code function
+    Description: サインアップ確認コードを再送する API エンドポイント
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/resend-code"
+
   SigninApi:
-    Description: API Gateway endpoint URL for Signin function
+    Description: ユーザーのサインイン（ログイン）用 API エンドポイント
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signin"
+
   MfaVerifyApi:
-    Description: API Gateway endpoint URL for Mfa verify function
+    Description: MFA（多要素認証）の検証用 API エンドポイント
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/mfa"
+
   ForgotPasswordApi:
-    Description: API Gateway endpoint URL for Forgot Password function
+    Description: パスワード再設定コード送信（忘れた場合）の API エンドポイント
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/forgot-password"
+
+  ForgotPasswordConfirmApi:
+    Description: パスワード再設定コードによる変更確定の API エンドポイント
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/forgot-password/confirm"
+
+  # 各 Lambda 関数の ARN を出力（参照用）
   SignupFunction:
-    Description: Signup Lambda Function ARN
+    Description: サインアップ処理を実行する Lambda 関数の ARN
     Value: !GetAtt SignupFunction.Arn
+
   SignupConfirmFunction:
-    Description: Confirm Signup Lambda Function ARN
+    Description: サインアップの確認処理を行う Lambda 関数の ARN
     Value: !GetAtt SignupConfirmFunction.Arn
+
   ResendCodeFunction:
-    Description: Signup Lambda Function ARN
+    Description: 確認コードの再送処理を行う Lambda 関数の ARN
     Value: !GetAtt ResendCodeFunction.Arn
+
   SigninFunction:
-    Description: Signin Lambda Function ARN
+    Description: サインイン処理を実行する Lambda 関数の ARN
     Value: !GetAtt SigninFunction.Arn
+
   MfaVerifyFunction:
-    Description: Signin Lambda Function ARN
+    Description: MFAコード検証を行う Lambda 関数の ARN
     Value: !GetAtt MfaVerifyFunction.Arn
+
   ForgotPasswordFunction:
-    Description: Signin Lambda Function ARN
+    Description: パスワード再設定コード送信を行う Lambda 関数の ARN
     Value: !GetAtt ForgotPasswordFunction.Arn
+
+  ForgotPasswordConfirmFunction:
+    Description: パスワード再設定完了処理を行う Lambda 関数の ARN
+    Value: !GetAtt ForgotPasswordConfirmFunction.Arn

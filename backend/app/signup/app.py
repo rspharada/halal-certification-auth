@@ -1,4 +1,4 @@
-from shared.common import get_secret_hash
+from shared.common import get_secret_hash, build_response
 import json
 import os
 import boto3
@@ -15,10 +15,7 @@ def lambda_handler(event, context):
         password = body.get("password")
 
         if not email or not password:
-            return {
-                "statusCode": 400,
-                "body": json.dumps({"error": "Missing email or password"})
-            }
+            return build_response(400, {"error": "Missing email or password"})
 
         response = cognito.sign_up(
             ClientId=CLIENT_ID,
@@ -30,22 +27,13 @@ def lambda_handler(event, context):
             ]
         )
 
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "message": "仮登録が完了しました（クライアントシークレット使用）",
-                "user_sub": response["UserSub"]
-            })
-        }
+        return build_response(200, {
+            "message": "仮登録が完了しました（クライアントシークレット使用）",
+            "user_sub": response["UserSub"]
+        })
 
     except cognito.exceptions.UsernameExistsException:
-        return {
-            "statusCode": 409,
-            "body": json.dumps({"error": "このメールアドレスは既に登録されています"})
-        }
+        return build_response(409, {"error": "このメールアドレスは既に登録されています"})
 
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        return build_response(500, {"error": str(e)})

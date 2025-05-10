@@ -1,7 +1,7 @@
+from shared.common import get_secret_hash, build_response
 import boto3
 import json
 import os
-from shared.common import get_secret_hash
 
 cognito = boto3.client("cognito-idp")
 
@@ -14,10 +14,7 @@ def lambda_handler(event, context):
         email = body.get("email")
 
         if not email:
-            return {
-                "statusCode": 400,
-                "body": json.dumps({"error": "Missing email"})
-            }
+            return build_response(400, {"error": "Missing email"})
 
         # 認証コードの再送
         response = cognito.resend_confirmation_code(
@@ -26,28 +23,16 @@ def lambda_handler(event, context):
             SecretHash=get_secret_hash(email, CLIENT_ID, CLIENT_SECRET)
         )
 
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "message": "確認コードを再送しました",
-                "delivery": response.get("CodeDeliveryDetails")
-            })
-        }
+        return build_response(200, {
+            "message": "確認コードを再送しました",
+            "delivery": response.get("CodeDeliveryDetails")
+        })
 
     except cognito.exceptions.UserNotFoundException:
-        return {
-            "statusCode": 404,
-            "body": json.dumps({"error": "ユーザーが見つかりません"})
-        }
+        return build_response(404, {"error": "ユーザーが見つかりません"})
 
     except cognito.exceptions.InvalidParameterException:
-        return {
-            "statusCode": 400,
-            "body": json.dumps({"error": "ユーザーは既に確認済みです"})
-        }
+        return build_response(400, {"error": "ユーザーは既に確認済みです"})
 
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        return build_response(500, {"error": str(e)})

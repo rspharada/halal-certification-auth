@@ -9,6 +9,7 @@ TARGETS=(
   mfa_verify
   resend_code
   forgot_password
+  forgot_password_confirm
   # ここに追加していける
 )
 

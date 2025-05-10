@@ -1,18 +1,17 @@
-from shared.common import get_secret_hash
+from shared.common import get_secret_hash, build_response
 import os
 import json
 import boto3
-import urllib.parse
 
 cognito = boto3.client("cognito-idp")
 
-ENV = os.getenv('ENV', 'local')
+ENV = os.getenv("ENV", "local")
 CLIENT_ID = os.environ["COGNITO_APP_CLIENT_ID"]
 CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
 USER_POOL_ID = os.environ["COGNITO_USER_POOL_ID"]
 DOMAIN = os.environ["DOMAIN"]
 REDIRECT_PATH = os.environ["REDIRECT_PATH"]
-scheme = 'http' if ENV == 'local' else 'https'
+scheme = "http" if ENV == "local" else "https"
 
 def lambda_handler(event, context):
     try:
@@ -22,10 +21,7 @@ def lambda_handler(event, context):
         session = body.get("session")
 
         if not email or not code or not session:
-            return {
-                "statusCode": 400,
-                "body": json.dumps({"error": "Missing email, code or session"})
-            }
+            return build_response(400, {"error": "Missing email, code or session"})
 
         response = cognito.admin_respond_to_auth_challenge(
             UserPoolId=USER_POOL_ID,
@@ -56,13 +52,7 @@ def lambda_handler(event, context):
         }
 
     except cognito.exceptions.NotAuthorizedException:
-        return {
-            "statusCode": 401,
-            "body": json.dumps({"error": "認証コードが正しくありません"})
-        }
+        return build_response(401, {"error": "認証コードが正しくありません"})
 
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        return build_response(500, {"error": str(e)})

@@ -1,4 +1,4 @@
-from shared.common import get_secret_hash
+from shared.common import get_secret_hash, build_response
 import json
 import os
 import boto3
@@ -15,10 +15,7 @@ def lambda_handler(event, context):
         password = body.get("password")
 
         if not email or not password:
-            return {
-                "statusCode": 400,
-                "body": json.dumps({"error": "Missing email or password"})
-            }
+            return build_response(400, {"error": "Missing email or password"})
 
         response = cognito.initiate_auth(
             AuthFlow="USER_PASSWORD_AUTH",
@@ -32,34 +29,19 @@ def lambda_handler(event, context):
 
         # MFAまたはカスタムチャレンジが必要な場合
         if "ChallengeName" not in response:
-            return {
-                "statusCode": 500,
-                "body": json.dumps({"error": "Unexpected response from Cognito"})
-            }
+            return build_response(500, {"error": "Unexpected response from Cognito"})
 
-        # 正常：MFAチャレンジを返す
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "message": "MFA required",
-                "challenge_name": response["ChallengeName"],
-                "session": response.get("Session")
-            })
-        }
+        return build_response(200, {
+            "message": "MFA required",
+            "challenge_name": response["ChallengeName"],
+            "session": response.get("Session")
+        })
+
     except cognito.exceptions.NotAuthorizedException:
-        return {
-            "statusCode": 401,
-            "body": json.dumps({"error": "メールアドレスまたはパスワードが正しくありません"})
-        }
+        return build_response(401, {"error": "メールアドレスまたはパスワードが正しくありません"})
 
     except cognito.exceptions.UserNotConfirmedException:
-        return {
-            "statusCode": 403,
-            "body": json.dumps({"error": "ユーザーが確認されていません"})
-        }
+        return build_response(403, {"error": "ユーザーが確認されていません"})
 
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+        return build_response(500, {"error": str(e)})

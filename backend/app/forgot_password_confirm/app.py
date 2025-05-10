@@ -1,7 +1,7 @@
-from shared.common import get_secret_hash, build_response
+import boto3
 import json
 import os
-import boto3
+from shared.common import get_secret_hash, build_response
 
 cognito = boto3.client("cognito-idp")
 
@@ -13,27 +13,27 @@ def lambda_handler(event, context):
         body = json.loads(event.get("body", "{}"))
         email = body.get("email")
         code = body.get("code")
+        new_password = body.get("new_password")
 
-        if not email or not code:
-            return build_response(400, {"error": "Missing email or code"})
+        if not email or not code or not new_password:
+            return build_response(400, {"error": "Missing email, code, or new_password"})
 
-        cognito.confirm_sign_up(
+        # パスワードリセット確定
+        cognito.confirm_forgot_password(
             ClientId=CLIENT_ID,
             Username=email,
             ConfirmationCode=code,
+            Password=new_password,
             SecretHash=get_secret_hash(email, CLIENT_ID, CLIENT_SECRET)
         )
 
-        return build_response(200, {"message": "本登録が完了しました"})
+        return build_response(200, {"message": "パスワードを変更しました"})
 
     except cognito.exceptions.CodeMismatchException:
-        return build_response(400, {"error": "確認コードが間違っています"})
+        return build_response(400, {"error": "認証コードが間違っています"})
 
     except cognito.exceptions.ExpiredCodeException:
-        return build_response(400, {"error": "確認コードの有効期限が切れています"})
-
-    except cognito.exceptions.UserNotFoundException:
-        return build_response(404, {"error": "ユーザーが見つかりません"})
+        return build_response(400, {"error": "認証コードの有効期限が切れています"})
 
     except Exception as e:
         return build_response(500, {"error": str(e)})
