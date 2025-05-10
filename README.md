@@ -1,9 +1,11 @@
-# ハラール認証 - 認証ページ（SPA）
+# 使い方
 
-## フォルダ構成
+## ハラール認証 - frontend
+
+### フォルダ構成
 
 ```console
-app
+frontend
 ├── Cargo.toml
 ├── pkg/                    # wasm-pack が出力する生成物（wasm, JS bindings）
 ├── static/                 # 静的ファイル（HTML, CSS, JS）
@@ -23,15 +25,17 @@ app
 ├── README.md
 ```
 
-## 静的ファイルの配信
+### 静的ファイルの配信
 
 ```console
+cd frontend
 trunk serve --open --port XXXX
 ```
 
-## テスト実行（ブラウザ上）
+### テスト実行（ブラウザ上）
 
 ```console
+cd frontend
 wasm-pack test --headless --chrome
 ```
 --headless を外すとブラウザが開きます。

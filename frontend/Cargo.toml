@@ -1,5 +1,5 @@
 [package]
-name = "app"
+name = "frontend"
 version = "0.1.0"
 edition = "2024"
 authors = ["Yew App Developer harada@respawn.jp"]
