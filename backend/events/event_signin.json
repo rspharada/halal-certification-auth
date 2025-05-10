@@ -1,0 +1,26 @@
+{
+  "body": "{\"email\": \"harada@respawn.jp\", \"password\": \"Passw0r92d!\"}",
+  "resource": "/auth/signin",
+  "path": "/auth/signin",
+  "httpMethod": "POST",
+  "isBase64Encoded": false,
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "requestContext": {
+    "accountId": "123456789012",
+    "resourceId": "def456",
+    "stage": "Prod",
+    "requestId": "example-signin-id",
+    "identity": {
+      "sourceIp": "127.0.0.1",
+      "userAgent": "PostmanRuntime/7.28.4"
+    },
+    "resourcePath": "/auth/signin",
+    "httpMethod": "POST",
+    "path": "/Prod/auth/signin"
+  }
+}

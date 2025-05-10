@@ -1,48 +1,188 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  backend
+  python3.13
 
-  Sample SAM Template for backend
+  SAM Template for backend
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
-  Function:
-    Timeout: 3
-    MemorySize: 128
+  Api:
+    Cors:
+      AllowOrigin: !Sub "'${CorsAllowedOrigin}'"
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization,Cookie'"
+      AllowCredentials: true
 
+# Parametersセクションは、デプロイ時に指定可能な入力パラメータを定義します
+Parameters:
+  Environment:
+    Type: String
+    Default: local
+    AllowedValues:
+      - local
+      - dev
+      - stg
+      - prd
+    Description: Deployment environment
+  Domain:
+    Type: String
+    Default: App Domain
+  ReduirectPath:
+    Type: String
+    Description: Redirect URI
+  CorsAllowedOrigin:
+    Type: String
+    Default: http://halal.local
+    Description: Allowed origin for CORS
+  CognitoUserPoolId:
+    Type: String
+    Description: Cognito User Pool ID
+  CognitoAppClientId:
+    Type: String
+    Description: Cognito App Client ID
+  CognitoAppClientSecret:
+    Type: String
+    Description: Cognito App Client Secret
 
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
-    LoggingConfig:
-      LogFormat: JSON
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Metadata:
-      BuildMethod: rust-cargolambda # More info about Cargo Lambda: https://github.com/cargo-lambda/cargo-lambda
+  # Lambda関数が実行時に利用するIAMロールを定義します
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
     Properties:
-      CodeUri: ./rust_app   # Points to dir of Cargo.toml
-      Handler: bootstrap    # Do not change, as this is the default executable name produced by Cargo Lambda
-      Runtime: provided.al2
+      RoleName: !Sub "halmark-${Environment}-lambda-role"  # ロール名を環境ごとに設定
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com  # Lambdaサービスがこのロールを引き受けることを許可
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaLoggingPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+        - PolicyName: CognitoAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:SignUp
+                  - cognito-idp:ConfirmSignUp
+                  - cognito-idp:ResendConfirmationCode
+                  - cognito-idp:AdminInitiateAuth
+                  - cognito-idp:AdminRespondToAuthChallenge
+                  - cognito-idp:AdminSetUserPassword
+                Resource: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolId}"
+
+  # SingupFunctionは、AWS Lambda関数を定義します
+  SignupFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-signup" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Signup 関数"
+      PackageType: Image
       Architectures:
-      - x86_64
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
       Events:
-        HelloWorld:
+        Signup:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            Path: /hello
-            Method: get
+            Path: /auth/signup
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/signup
+      DockerTag: python3.13-v1
+
+  # SignupConfirmFunctionは、AWS Lambda関数を定義します
+  SignupConfirmFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-confirm signup" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Confirm Signup 関数"
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
+      Events:
+        SignupConfirm:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /auth/signup/confirm
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/signup_confirm
+      DockerTag: python3.13-v1
+
+  # SigninFunctionは、AWS Lambda関数を定義します
+  SigninFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-signin" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] Signin 関数"
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
+      Events:
+        Signin:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /auth/signin
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/signin
+      DockerTag: python3.13-v1
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  SignupApi:
+    Description: API Gateway endpoint URL for Prod stage for Signup function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signup"
+  SignupConfirmApi:
+    Description: API Gateway endpoint URL for Prod stage for Confirm Signup function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signup/confirm"
+  SigninApi:
+    Description: API Gateway endpoint URL for Prod stage for Signin function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signin"
+  SignupFunction:
+    Description: Signup Lambda Function ARN
+    Value: !GetAtt SignupFunction.Arn
+  SignupConfirmFunction:
+    Description: Confirm Signup Lambda Function ARN
+    Value: !GetAtt SignupConfirmFunction.Arn
+  SigninFunction:
+    Description: Signin Lambda Function ARN
+    Value: !GetAtt SigninFunction.Arn

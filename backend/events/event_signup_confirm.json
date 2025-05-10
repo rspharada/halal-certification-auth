@@ -1,0 +1,26 @@
+{
+    "body": "{\"email\": \"harada@respawn.jp\", \"code\": \"560437\"}",
+    "resource": "/auth/signup/confirm",
+    "path": "/auth/signup/confirm",
+    "httpMethod": "POST",
+    "isBase64Encoded": false,
+    "queryStringParameters": null,
+    "pathParameters": null,
+    "stageVariables": null,
+    "headers": {
+        "Content-Type": "application/json"
+    },
+    "requestContext": {
+        "accountId": "123456789012",
+        "resourceId": "abc123",
+        "stage": "Prod",
+        "requestId": "confirm-signup-example-id",
+        "identity": {
+            "sourceIp": "127.0.0.1",
+            "userAgent": "curl/8.1.2"
+        },
+        "resourcePath": "/auth/signup/confirm",
+        "httpMethod": "POST",
+        "path": "/Prod/auth/signup/confirm"
+    }
+}
