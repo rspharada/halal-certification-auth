@@ -6,6 +6,7 @@ TARGETS=(
   signin
   signup
   signup_confirm
+  mfa_verify
   # ここに追加していける
 )
 

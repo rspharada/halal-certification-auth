@@ -1,5 +1,5 @@
 {
-    "body": "{\"email\": \"harada@respawn.jp\", \"code\": \"560437\"}",
+    "body": "{\"email\": \"harada@respawn.jp\", \"code\": \"380182\"}",
     "resource": "/auth/signup/confirm",
     "path": "/auth/signup/confirm",
     "httpMethod": "POST",

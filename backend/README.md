@@ -21,6 +21,9 @@ sam local invoke SignupConfirmFunction --event ./events/event_signup_confirm.jso
 # [SigninFunction]
 sam local invoke SigninFunction --event ./events/event_signin.json --env-vars=env.local.json --profile verify
 
+# [MfaVerifyFunction]
+sam local invoke MfaVerifyFunction --event ./events/event_mfa_verify.json --env-vars=env.local.json --profile verify
+
 ```
 
 ```bash

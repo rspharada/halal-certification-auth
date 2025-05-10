@@ -33,7 +33,7 @@ Parameters:
     Description: Redirect URI
   CorsAllowedOrigin:
     Type: String
-    Default: http://halal.local
+    Default: halal.local
     Description: Allowed origin for CORS
   CognitoUserPoolId:
     Type: String
@@ -164,6 +164,35 @@ Resources:
       DockerContext: ./app/signin
       DockerTag: python3.13-v1
 
+  # MfaVerifyFunctionは、AWS Lambda関数を定義します
+  MfaVerifyFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Sub "halmark-${Environment}-mfaverify" # Lambda関数名を環境ごとに設定
+      Description: !Sub "[halmark][${Environment}] MFA Verify 関数"
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn  # 実行ロールを設定
+      Events:
+        Signin:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /auth/mfa
+            Method: post
+      Environment:
+        Variables:
+          ENV: !Ref Environment
+          DOMAIN: !Ref Domain
+          REDIRECT_PATH: !Ref ReduirectPath
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+          COGNITO_APP_CLIENT_ID: !Ref CognitoAppClientId
+          COGNITO_APP_CLIENT_SECRET: !Ref CognitoAppClientSecret
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./app/mfa_verify
+      DockerTag: python3.13-v1
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -177,6 +206,9 @@ Outputs:
   SigninApi:
     Description: API Gateway endpoint URL for Prod stage for Signin function
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/signin"
+  MfaVerifyApi:
+    Description: API Gateway endpoint URL for Prod stage for Mfa verify function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/auth/mfa"
   SignupFunction:
     Description: Signup Lambda Function ARN
     Value: !GetAtt SignupFunction.Arn
@@ -186,3 +218,6 @@ Outputs:
   SigninFunction:
     Description: Signin Lambda Function ARN
     Value: !GetAtt SigninFunction.Arn
+  MfaVerifyFunction:
+    Description: Signin Lambda Function ARN
+    Value: !GetAtt MfaVerifyFunction.Arn
