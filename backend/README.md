@@ -66,7 +66,7 @@ sam local invoke ForgotPasswordConfirmFunction --event ./events/event_forgot_pas
 
 ### API Gateway モード
 ```bash
-sam local start-api --port 8080 --env-vars=env.local.json
+sam local start-api --port 8080 --env-vars=env.local.json --docker-network=halal_default
 ```
 
 ## デプロイ

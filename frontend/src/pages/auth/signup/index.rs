@@ -5,7 +5,7 @@
 //! 主な役割：
 //! - 状態（ユーザー名・メール・パスワード）の管理
 //! - フォーム入力の双方向バインディング
-//! - サインアップAPI（POST /auth/api/signup）への非同期送信処理
+//! - サインアップAPI（POST /api/auth/signup）への非同期送信処理
 //! - 成功・失敗時のメッセージ表示
 //!
 //! 関連ファイル：
@@ -61,7 +61,7 @@ pub fn signup_page() -> Html {
             let message = message.clone();
             spawn_local(async move {
                 // 非同期HTTP POSTリクエスト
-                let res = Request::post("/auth/api/signup")
+                let res = Request::post("/api/auth/signup")
                     .header("Content-Type", "application/json")
                     .body(serde_json::to_string(&form).unwrap()) // JSONに変換
                     .unwrap() // RequestBuilderのResultをunwrap

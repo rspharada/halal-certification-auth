@@ -49,7 +49,7 @@ pub fn confirm_page() -> Html {
 
             let message = message.clone();
             spawn_local(async move {
-                let res = Request::post("/auth/api/confirm")
+                let res = Request::post("/api/auth/signup/confirm")
                     .header("Content-Type", "application/json")
                     .body(serde_json::to_string(&data).unwrap())
                     .unwrap()

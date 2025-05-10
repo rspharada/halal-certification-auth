@@ -46,7 +46,7 @@ pub fn password_reset_mfa_page() -> Html {
 
             let message = message.clone();
             spawn_local(async move {
-                let res = Request::post("/auth/api/verify-reset-mfa")
+                let res = Request::post("/api/auth/mfa")
                     .header("Content-Type", "application/json")
                     .body(serde_json::to_string(&payload).unwrap())
                     .unwrap()

@@ -1,8 +1,6 @@
 # 使い方
 
-## ハラール認証 - frontend
-
-### フォルダ構成
+## フォルダ構成
 
 ```console
 frontend
@@ -25,17 +23,15 @@ frontend
 ├── README.md
 ```
 
-### 静的ファイルの配信
+## 静的ファイルの配信
 
 ```console
-cd frontend
 trunk serve --open --port XXXX
 ```
 
-### テスト実行（ブラウザ上）
+## テスト実行（ブラウザ上）
 
 ```console
-cd frontend
 wasm-pack test --headless --chrome
 ```
 --headless を外すとブラウザが開きます。

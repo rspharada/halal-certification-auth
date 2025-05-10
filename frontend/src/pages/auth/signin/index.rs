@@ -5,7 +5,7 @@
 //! 主な役割：
 //! - メールアドレスとパスワードの状態管理
 //! - 入力フォームと状態の双方向バインディング
-//! - サインインAPI（POST /auth/api/signin）への非同期リクエスト送信
+//! - サインインAPI（POST /api/auth/signin）への非同期リクエスト送信
 //! - 成功・失敗時のメッセージ表示
 //!
 //! 関連ファイル：
@@ -58,7 +58,7 @@ pub fn signin_page() -> Html {
 
             let message = message.clone();
             spawn_local(async move {
-                let res = Request::post("/auth/api/signin")
+                let res = Request::post("/api/auth/signin")
                     .header("Content-Type", "application/json")
                     .body(serde_json::to_string(&form).unwrap())
                     .unwrap()

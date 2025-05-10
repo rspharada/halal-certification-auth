@@ -55,7 +55,7 @@ pub fn password_reset_page() -> Html {
 
             let message = message.clone();
             spawn_local(async move {
-                let res = Request::post("/auth/api/reset-password")
+                let res = Request::post("/api/auth/forgot-password/confirm")
                     .header("Content-Type", "application/json")
                     .body(serde_json::to_string(&payload).unwrap())
                     .unwrap()
