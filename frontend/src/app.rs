@@ -14,17 +14,23 @@
 //! - `pages/`: 各ページコンポーネント（例：`signup.rs`, `signin.rs`）
 
 use crate::routes::{Route, switch};
+use crate::types::AuthContext;
+use std::rc::Rc;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 /// アプリケーション全体のルートコンポーネント（SPAのエントリーポイント）
 #[function_component(App)]
 pub fn app() -> Html {
+    let email = use_state(|| Rc::new("".to_string()));
+    let session = use_state(|| Rc::new("".to_string()));
+    let auth_ctx = AuthContext { email, session };
+
     html! {
-        // <BrowserRouter> はクライアントサイドルーティングの土台
-        <BrowserRouter>
-            // <Switch<Route>> によりルート定義に応じてページ切り替え
-            <Switch<Route> render={switch} />
-        </BrowserRouter>
+        <ContextProvider<AuthContext> context={auth_ctx}>
+            <BrowserRouter>
+                <Switch<Route> render={switch} />
+            </BrowserRouter>
+        </ContextProvider<AuthContext>>
     }
 }

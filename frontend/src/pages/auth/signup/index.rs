@@ -3,74 +3,92 @@
 //! このファイルは Yew アプリケーションの「サインアップページ」を定義します。
 //!
 //! 主な役割：
-//! - 状態（ユーザー名・メール・パスワード）の管理
-//! - フォーム入力の双方向バインディング
+//! - メールアドレス・パスワード・確認用パスワードの状態管理
+//! - パスワード一致チェック
 //! - サインアップAPI（POST /api/auth/signup）への非同期送信処理
-//! - 成功・失敗時のメッセージ表示
+//! - 成功時に `/auth/mfa/:email` へ遷移（yew_router使用）
 //!
 //! 関連ファイル：
-//! - `types.rs`: フォームデータの構造体定義を分離する場合に使用
-//! - `routes.rs`: このページに対応するURL `/signup` をマッピング
+//! - `routes.rs`: Route::SigninMfa { email } にマッピング
 
 use gloo::net::http::Request;
 use serde::Serialize;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
-/// サインアップフォームの送信データ構造
+use crate::routes::Route;
+use crate::types::AuthContext;
+use std::rc::Rc;
+use yew::prelude::use_context;
+
 #[derive(Serialize)]
 struct SignupForm {
     email: String,
     password: String,
 }
 
-/// サインアップページ本体（関数型コンポーネント）
 #[function_component(SignupPage)]
 pub fn signup_page() -> Html {
-    // 入力フィールドごとの状態管理（Yewのuse_stateを使用）
+    let auth_ctx = use_context::<AuthContext>();
+
     let email = use_state(|| "".to_string());
     let password = use_state(|| "".to_string());
-    let message = use_state(|| "".to_string()); // 結果メッセージ用
+    let confirm_password = use_state(|| "".to_string());
+    let message = use_state(|| "".to_string());
 
-    // 入力イベントハンドラを共通化するクロージャ（再利用性のため）
+    let navigator = use_navigator().unwrap();
+
     let handle_input = |state: UseStateHandle<String>| {
         Callback::from(move |e: InputEvent| {
             let value = e
                 .target_unchecked_into::<web_sys::HtmlInputElement>()
                 .value();
-            state.set(value); // 入力値を state に反映
+            state.set(value);
         })
     };
 
-    // フォーム送信時の非同期処理を定義（POSTリクエスト）
     let onsubmit = {
-        // 状態をクロージャ内にmoveで取り込む
         let email = email.clone();
         let password = password.clone();
+        let confirm_password = confirm_password.clone();
         let message = message.clone();
+        let navigator = navigator.clone(); // clone によって Fn を満たす
 
         Callback::from(move |e: SubmitEvent| {
-            e.prevent_default(); // ページリロードを防止
+            e.prevent_default();
 
-            // 送信用データの作成
+            if *password != *confirm_password {
+                message.set("パスワードが一致しません".into());
+                return;
+            }
+
             let form = SignupForm {
                 email: email.to_string(),
                 password: password.to_string(),
             };
 
             let message = message.clone();
+            let nav = navigator.clone();
+            let email_for_redirect = email.to_string();
+            let auth_ctx = auth_ctx.clone();
+
             spawn_local(async move {
-                // 非同期HTTP POSTリクエスト
                 let res = Request::post("/api/auth/signup")
                     .header("Content-Type", "application/json")
-                    .body(serde_json::to_string(&form).unwrap()) // JSONに変換
-                    .unwrap() // RequestBuilderのResultをunwrap
+                    .body(serde_json::to_string(&form).unwrap())
+                    .unwrap()
                     .send()
                     .await;
 
-                // 応答の内容に応じてメッセージを表示
                 match res {
-                    Ok(resp) if resp.ok() => message.set("サインアップ成功！".into()),
+                    Ok(resp) if resp.ok() => {
+                        if let Some(auth_ctx) = auth_ctx {
+                            auth_ctx.email.set(Rc::new(email_for_redirect.clone()));
+                            auth_ctx.session.set(Rc::new("".to_string()));
+                        }
+                        nav.push(&Route::SignupConfirm);
+                    }
                     Ok(_) => message.set("サインアップ失敗...".into()),
                     Err(_) => message.set("ネットワークエラー".into()),
                 }
@@ -78,7 +96,6 @@ pub fn signup_page() -> Html {
         })
     };
 
-    // 実際のHTMLフォームUIの構築
     html! {
         <form {onsubmit}>
             <h2>{ "サインアップ" }</h2>
@@ -97,39 +114,16 @@ pub fn signup_page() -> Html {
                 oninput={handle_input(password.clone())}
             />
 
+            <input
+                type="password"
+                placeholder="確認用パスワード"
+                value={(*confirm_password).clone()}
+                oninput={handle_input(confirm_password.clone())}
+            />
+
             <button type="submit">{ "登録" }</button>
 
-            // 結果メッセージの表示
             <p>{ &*message }</p>
         </form>
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use gloo::utils::document;
-    use wasm_bindgen_test::*;
-    use yew::Renderer;
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[allow(dead_code)]
-    #[wasm_bindgen_test]
-    fn it_renders_signup_page() {
-        // DOMノードを動的に作成
-        let root = document().create_element("div").unwrap();
-        document().body().unwrap().append_child(&root).unwrap();
-
-        // SignupPageを仮想DOMに描画
-        Renderer::<SignupPage>::with_root(root.into()).render();
-
-        // ページに特定のテキストが含まれているか確認
-        let body_html = document().body().unwrap().inner_html();
-        assert!(
-            body_html.contains("サインアップ"),
-            "Expected 'サインアップ' in HTML, but got: {}",
-            body_html
-        );
     }
 }

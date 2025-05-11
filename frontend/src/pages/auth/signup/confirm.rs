@@ -4,6 +4,7 @@
 //!
 //! ユーザーは受け取った確認コードを入力してアカウントを有効化する。
 
+use crate::types::AuthContext;
 use gloo::net::http::Request;
 use serde::Serialize;
 use wasm_bindgen_futures::spawn_local;
@@ -12,14 +13,15 @@ use yew::prelude::*;
 /// 確認コード送信データの構造体
 #[derive(Serialize)]
 struct ConfirmData {
-    username: String,
+    email: String,
     code: String,
 }
 
 /// 確認ページ本体
-#[function_component(ConfirmPage)]
+#[function_component(SignupConfirmPage)]
 pub fn confirm_page() -> Html {
-    let username = use_state(|| "".to_string());
+    let auth_ctx = use_context::<AuthContext>().expect("AuthContext not found");
+    let email = auth_ctx.email.clone();
     let code = use_state(|| "".to_string());
     let message = use_state(|| "".to_string());
 
@@ -35,7 +37,7 @@ pub fn confirm_page() -> Html {
 
     // フォーム送信時の非同期処理
     let onsubmit = {
-        let username = username.clone();
+        let email = email.clone();
         let code = code.clone();
         let message = message.clone();
 
@@ -43,7 +45,7 @@ pub fn confirm_page() -> Html {
             e.prevent_default();
 
             let data = ConfirmData {
-                username: username.to_string(),
+                email: email.to_string(),
                 code: code.to_string(),
             };
 
@@ -59,7 +61,7 @@ pub fn confirm_page() -> Html {
                 match res {
                     Ok(resp) if resp.ok() => message.set("確認に成功しました！".into()),
                     Ok(_) => message.set(
-                        "確認に失敗しました。コードまたはユーザー名を確認してください。".into(),
+                        "確認に失敗しました。コードまたはメールアドレスを確認してください。".into(),
                     ),
                     Err(_) => message.set("通信エラーが発生しました。".into()),
                 }
@@ -70,13 +72,6 @@ pub fn confirm_page() -> Html {
     html! {
         <form {onsubmit}>
             <h2>{ "アカウント確認コード入力" }</h2>
-
-            <input
-                type="text"
-                placeholder="ユーザー名"
-                value={(*username).clone()}
-                oninput={handle_input(username.clone())}
-            />
 
             <input
                 type="text"
@@ -96,6 +91,7 @@ pub fn confirm_page() -> Html {
 mod tests {
     use super::*;
     use gloo::utils::document;
+    use std::rc::Rc;
     use wasm_bindgen_test::*;
     use yew::Renderer;
 
@@ -104,11 +100,29 @@ mod tests {
     #[allow(dead_code)]
     #[wasm_bindgen_test]
     fn it_renders_confirm_page() {
-        // DOMの一時ノード作成
         let div = document().create_element("div").unwrap();
         document().body().unwrap().append_child(&div).unwrap();
 
-        // ConfirmPage を描画（実際の DOM に追加）
-        Renderer::<ConfirmPage>::with_root(div.into()).render();
+        // yew::Renderer expects a component that implements `Component`, not a ContextProvider.
+        // So we use an intermediate wrapper component instead.
+        #[function_component(TestWrapper)]
+        fn test_wrapper() -> Html {
+            let email = use_state_eq(|| Rc::new("test@example.com".to_string()));
+            let session = use_state_eq(|| Rc::new("".to_string()));
+            let ctx = AuthContext { email, session };
+            html! {
+                <ContextProvider<AuthContext> context={ctx}>
+                    <SignupConfirmPage />
+                </ContextProvider<AuthContext>>
+            }
+        }
+
+        Renderer::<TestWrapper>::with_root(div.into()).render();
+
+        let body = document().body().unwrap().inner_html();
+        assert!(
+            body.contains("確認コード"),
+            "ページに '確認コード' が含まれていません"
+        );
     }
 }

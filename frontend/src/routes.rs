@@ -7,7 +7,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 // 各ページを use でインポート
-use crate::pages::auth::signup::confirm::ConfirmPage;
+use crate::pages::auth::signup::confirm::SignupConfirmPage;
 use crate::pages::auth::signup::index::SignupPage;
 
 use crate::pages::auth::signin::index::SigninPage;
@@ -23,13 +23,13 @@ pub enum Route {
     #[at("/auth/signup")]
     Signup,
 
-    #[at("/auth/confirm")]
-    ConfirmAccount,
+    #[at("/auth/confirm/")]
+    SignupConfirm,
 
-    #[at("/sauth/ignin")]
+    #[at("/auth/signin")]
     Signin,
 
-    #[at("/auth/mfa")]
+    #[at("/auth/mfa/")]
     SigninMfa,
 
     #[at("/auth/forgot")]
@@ -46,9 +46,11 @@ pub enum Route {
 pub fn switch(route: Route) -> Html {
     match route {
         Route::Signup => html! { <SignupPage /> },
-        Route::ConfirmAccount => html! { <ConfirmPage /> },
+        Route::SignupConfirm => html! { <SignupConfirmPage/> },
         Route::Signin => html! { <SigninPage /> },
-        Route::SigninMfa => html! { <SigninMfaPage /> },
+        Route::SigninMfa => {
+            html! { <SigninMfaPage/> }
+        }
         Route::PasswordResetRequest => html! { <PasswordResetRequestPage /> },
         Route::PasswordResetMfa => html! { <PasswordResetMfaPage /> },
         Route::PasswordReset => html! { <PasswordResetPage /> },

@@ -13,3 +13,12 @@
 //! - ユーザー状態、セッション、MFAステージなどの enum 化
 //!
 //! ※ ページごとに限定される型は当面は各ページ内に定義し、共通化が必要になった時点で本ファイルへ移動してください。
+use std::rc::Rc;
+use yew::prelude::*;
+
+/// 認証状態（主にメールアドレスとセッション情報）を共有するコンテキスト
+#[derive(Clone, PartialEq)]
+pub struct AuthContext {
+    pub email: UseStateHandle<Rc<String>>,
+    pub session: UseStateHandle<Rc<String>>,
+}
