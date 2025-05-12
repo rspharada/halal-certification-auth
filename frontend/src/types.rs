@@ -19,6 +19,7 @@ use yew::prelude::*;
 /// 認証状態（主にメールアドレスとセッション情報）を共有するコンテキスト
 #[derive(Clone, PartialEq)]
 pub struct AuthContext {
+    pub message: UseStateHandle<Rc<String>>,
     pub email: UseStateHandle<Rc<String>>,
     pub session: UseStateHandle<Rc<String>>,
 }

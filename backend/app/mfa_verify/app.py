@@ -34,21 +34,23 @@ def lambda_handler(event, context):
             },
             Session=session
         )
-
+        print(response)
         tokens = response["AuthenticationResult"]
-        redirect_url = f"{scheme}://{DOMAIN}{REDIRECT_PATH}"
-
+        redirect_url = f"{scheme}://www.{DOMAIN}{REDIRECT_PATH}"
+        secure_flag = "Secure;" if ENV != "local" else ""
         return {
-            "statusCode": 302,
-            "headers": {
-                "Location": redirect_url,
-                "Set-Cookie": (
-                    f"access_token={tokens['AccessToken']}; Path=/; HttpOnly; Secure; SameSite=Lax, "
-                    f"refresh_token={tokens['RefreshToken']}; Path=/; HttpOnly; Secure; SameSite=Lax, "
-                    f"id_token={tokens['IdToken']}; Path=/; HttpOnly; Secure; SameSite=Lax"
-                )
+            "statusCode": 200,
+            "multiValueHeaders": {
+                "Set-Cookie": [
+                    f"access_token={tokens['AccessToken']}; Path=/; Domain=.{DOMAIN}; HttpOnly; {secure_flag} SameSite=Lax; Max-Age=3600",
+                    f"refresh_token={tokens['RefreshToken']}; Path=/; Domain=.{DOMAIN}; HttpOnly; {secure_flag} SameSite=Lax; Max-Age=3600",
+                    f"id_token={tokens['IdToken']}; Path=/; Domain=.{DOMAIN}; HttpOnly; {secure_flag} SameSite=Lax; Max-Age=3600",
+                ]
             },
-            "body": ""
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": json.dumps({ "message": "authenticated" })
         }
 
     except cognito.exceptions.NotAuthorizedException:

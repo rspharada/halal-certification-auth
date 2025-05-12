@@ -23,7 +23,7 @@ pub enum Route {
     #[at("/auth/signup")]
     Signup,
 
-    #[at("/auth/confirm/")]
+    #[at("/auth/signup/confirm")]
     SignupConfirm,
 
     #[at("/auth/signin")]
@@ -40,6 +40,10 @@ pub enum Route {
 
     #[at("/auth/reset")]
     PasswordReset,
+
+    #[not_found]
+    #[at("/404")]
+    NotFound,
 }
 
 /// `Route` に応じて描画するコンポーネントを返す関数
@@ -54,5 +58,16 @@ pub fn switch(route: Route) -> Html {
         Route::PasswordResetRequest => html! { <PasswordResetRequestPage /> },
         Route::PasswordResetMfa => html! { <PasswordResetMfaPage /> },
         Route::PasswordReset => html! { <PasswordResetPage /> },
+        Route::NotFound => html! {
+            <div style="text-align: center; padding: 3rem;">
+                <h1 style="font-size: 3rem; color: #000000;">{ "404 - ページが見つかりません" }</h1>
+                <p style="font-size: 1.25rem; margin-top: 1rem;">
+                    { "申し訳ありません。お探しのページは存在しないか、移動された可能性があります。" }
+                </p>
+                <a href="/auth/signin" style="color: #3182ce; text-decoration: underline; display: inline-block; margin-top: 2rem;">
+                    { "サインインページに戻る" }
+                </a>
+            </div>
+        },
     }
 }

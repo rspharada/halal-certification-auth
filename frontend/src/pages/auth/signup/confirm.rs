@@ -3,12 +3,13 @@
 //! サインアップ時に送信されたメールの確認コードを入力・検証するページ。
 //!
 //! ユーザーは受け取った確認コードを入力してアカウントを有効化する。
-
+use crate::routes::Route;
 use crate::types::AuthContext;
 use gloo::net::http::Request;
 use serde::Serialize;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
+use yew_router::prelude::use_navigator;
 
 /// 確認コード送信データの構造体
 #[derive(Serialize)]
@@ -24,6 +25,18 @@ pub fn confirm_page() -> Html {
     let email = auth_ctx.email.clone();
     let code = use_state(|| "".to_string());
     let message = use_state(|| "".to_string());
+    let navigator = use_navigator().unwrap();
+
+    {
+        let navigator = navigator.clone();
+        let email = email.clone();
+        use_effect_with(email, move |email| {
+            if email.is_empty() {
+                navigator.push(&Route::Signin);
+            }
+            || ()
+        });
+    }
 
     // 入力共通処理
     let handle_input = |state: UseStateHandle<String>| {
@@ -69,6 +82,32 @@ pub fn confirm_page() -> Html {
         })
     };
 
+    // 追加: 確認コード再送信用のイベントハンドラ
+    let onresend = {
+        let email = email.clone();
+        let message = message.clone();
+
+        Callback::from(move |_| {
+            let email = email.clone();
+            let message = message.clone();
+
+            spawn_local(async move {
+                let res = Request::post("/api/auth/resend-code")
+                    .header("Content-Type", "application/json")
+                    .body(format!(r#"{{"email":"{}"}}"#, email.as_ref()))
+                    .unwrap()
+                    .send()
+                    .await;
+
+                match res {
+                    Ok(resp) if resp.ok() => message.set("確認コードを再送信しました。".into()),
+                    Ok(_) => message.set("再送信に失敗しました。".into()),
+                    Err(_) => message.set("通信エラーが発生しました。".into()),
+                }
+            });
+        })
+    };
+
     html! {
         <form {onsubmit}>
             <h2>{ "アカウント確認コード入力" }</h2>
@@ -81,6 +120,7 @@ pub fn confirm_page() -> Html {
             />
 
             <button type="submit">{ "確認" }</button>
+            <button type="button" onclick={onresend}>{ "確認コード再送信" }</button>
 
             <p>{ &*message }</p>
         </form>
@@ -107,9 +147,15 @@ mod tests {
         // So we use an intermediate wrapper component instead.
         #[function_component(TestWrapper)]
         fn test_wrapper() -> Html {
+            let message = use_state(|| Rc::new("".to_string()));
+
             let email = use_state_eq(|| Rc::new("test@example.com".to_string()));
             let session = use_state_eq(|| Rc::new("".to_string()));
-            let ctx = AuthContext { email, session };
+            let ctx = AuthContext {
+                message,
+                email,
+                session,
+            };
             html! {
                 <ContextProvider<AuthContext> context={ctx}>
                     <SignupConfirmPage />

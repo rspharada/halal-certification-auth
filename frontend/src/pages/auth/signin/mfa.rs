@@ -7,6 +7,7 @@ use crate::types::AuthContext;
 use gloo::net::http::Request;
 use serde::Serialize;
 use wasm_bindgen_futures::spawn_local;
+use web_sys::window;
 use yew::prelude::*;
 
 /// MFAコード送信用データ構造体
@@ -64,7 +65,10 @@ pub fn signin_mfa_page() -> Html {
                 match res {
                     Ok(resp) if resp.ok() => {
                         message.set("MFA認証に成功しました！".into());
-                        // TODO: 認証後のリダイレクトをここで実装する（use_navigatorなど）
+                        // 外部URLへ遷移（完全なURL）
+                        if let Some(win) = window() {
+                            let _ = win.location().set_href("http://www.halal.local/");
+                        }
                     }
                     Ok(_) => message.set("コードが正しくありません。".into()),
                     Err(_) => message.set("ネットワークエラーが発生しました。".into()),
@@ -108,10 +112,15 @@ mod tests {
 
         #[function_component(TestWrapper)]
         fn test_wrapper() -> Html {
+            let message = use_state(|| Rc::new("".to_string()));
             let email = use_state(|| Rc::new("test@example.com".to_string()));
             let session = use_state(|| Rc::new("dummy-session-id".to_string()));
 
-            let auth_ctx = AuthContext { email, session };
+            let auth_ctx = AuthContext {
+                message,
+                email,
+                session,
+            };
 
             html! {
                 <ContextProvider<AuthContext> context={auth_ctx}>
