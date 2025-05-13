@@ -1,0 +1,97 @@
+.input-field {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.input-field:focus {
+    border-color: #66afe9;
+    outline: none;
+    box-shadow: 0 0 3px rgba(102, 175, 233, 0.6);
+}
+
+.input-field::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.input-error {
+    border: 1px solid #e3342f;
+    /* 赤色ボーダー */
+    background-color: #fef2f2;
+    /* ほんのり赤背景 */
+    color: #b91c1c;
+    /* 文字も赤寄りに */
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-error::placeholder {
+    color: #f87171;
+    /* placeholder も赤めに */
+}
+
+.layout-root {
+    min-height: 100vh;
+    background-color: #f3f4f6;
+    /* 薄いグレー背景 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.layout-card {
+    width: 100%;
+    max-width: 400px;
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* ← これで上下の間隔が取れます */
+}
+
+.password-rules {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.password-rules li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    transition: color 0.3s ease;
+}
+
+.password-rules li.valid::before {
+    content: '✔';
+    color: #28a745;
+    font-weight: bold;
+}
+
+.password-rules li.invalid::before {
+    content: '✖';
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.password-rules li.valid {
+    color: #28a745;
+}
+
+.password-rules li.invalid {
+    color: #dc3545;
+}

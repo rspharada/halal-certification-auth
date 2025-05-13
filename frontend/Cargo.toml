@@ -5,6 +5,7 @@ edition = "2024"
 authors = ["Yew App Developer harada@respawn.jp"]
 
 [dependencies]
+regex = "1.10"
 yew = { version = "0.21", features = ["csr"] }
 yew-router = "0.18"
 serde = { version = "1", features = ["derive"] }
@@ -20,4 +21,5 @@ web-sys = { version = "0.3", features = [
     "Node",
     "Window",
 ] }
+[dev-dependencies]
 wasm-bindgen-test = "0.3"
