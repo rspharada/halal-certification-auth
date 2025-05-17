@@ -1,174 +1,23 @@
-//! confirm.rs
-//!
-//! サインアップ時に送信されたメールの確認コードを入力・検証するページ。
-//!
-//! ユーザーは受け取った確認コードを入力してアカウントを有効化する。
-use crate::routes::Route;
-use crate::types::AuthContext;
-use gloo::net::http::Request;
-use serde::Serialize;
-use wasm_bindgen_futures::spawn_local;
+use yew::function_component;
 use yew::prelude::*;
-use yew_router::prelude::use_navigator;
 
-/// 確認コード送信データの構造体
-#[derive(Serialize)]
-struct ConfirmData {
-    email: String,
-    code: String,
-}
+use crate::components::layout::Layout;
+use crate::features::auth::components::signup_confirm_form::SignupConfirmForm;
+use crate::features::auth::hooks::use_confirm_state::use_confirm_state;
 
-/// 確認ページ本体
 #[function_component(SignupConfirmPage)]
-pub fn confirm_page() -> Html {
-    let auth_ctx = use_context::<AuthContext>().expect("AuthContext not found");
-    let email = auth_ctx.email.clone();
-    let code = use_state(|| "".to_string());
-    let message = use_state(|| "".to_string());
-    let navigator = use_navigator().unwrap();
-
-    {
-        let navigator = navigator.clone();
-        let email = email.clone();
-        use_effect_with(email, move |email| {
-            if email.is_empty() {
-                navigator.push(&Route::Signin);
-            }
-            || ()
-        });
-    }
-
-    // 入力共通処理
-    let handle_input = |state: UseStateHandle<String>| {
-        Callback::from(move |e: InputEvent| {
-            let value = e
-                .target_unchecked_into::<web_sys::HtmlInputElement>()
-                .value();
-            state.set(value);
-        })
-    };
-
-    // フォーム送信時の非同期処理
-    let onsubmit = {
-        let email = email.clone();
-        let code = code.clone();
-        let message = message.clone();
-
-        Callback::from(move |e: SubmitEvent| {
-            e.prevent_default();
-
-            let data = ConfirmData {
-                email: email.to_string(),
-                code: code.to_string(),
-            };
-
-            let message = message.clone();
-            spawn_local(async move {
-                let res = Request::post("/api/auth/signup/confirm")
-                    .header("Content-Type", "application/json")
-                    .body(serde_json::to_string(&data).unwrap())
-                    .unwrap()
-                    .send()
-                    .await;
-
-                match res {
-                    Ok(resp) if resp.ok() => message.set("確認に成功しました！".into()),
-                    Ok(_) => message.set(
-                        "確認に失敗しました。コードまたはメールアドレスを確認してください。".into(),
-                    ),
-                    Err(_) => message.set("通信エラーが発生しました。".into()),
-                }
-            });
-        })
-    };
-
-    // 追加: 確認コード再送信用のイベントハンドラ
-    let onresend = {
-        let email = email.clone();
-        let message = message.clone();
-
-        Callback::from(move |_| {
-            let email = email.clone();
-            let message = message.clone();
-
-            spawn_local(async move {
-                let res = Request::post("/api/auth/resend-code")
-                    .header("Content-Type", "application/json")
-                    .body(format!(r#"{{"email":"{}"}}"#, email.as_ref()))
-                    .unwrap()
-                    .send()
-                    .await;
-
-                match res {
-                    Ok(resp) if resp.ok() => message.set("確認コードを再送信しました。".into()),
-                    Ok(_) => message.set("再送信に失敗しました。".into()),
-                    Err(_) => message.set("通信エラーが発生しました。".into()),
-                }
-            });
-        })
-    };
-
+pub fn signup_confirm_page() -> Html {
+    let confirm = use_confirm_state();
     html! {
-        <form {onsubmit}>
-            <h2>{ "アカウント確認コード入力" }</h2>
-
-            <input
-                type="text"
-                placeholder="確認コード"
-                value={(*code).clone()}
-                oninput={handle_input(code.clone())}
+        <Layout>
+            <SignupConfirmForm
+                code={confirm.state.code.clone()}
+                message={confirm.state.message.clone()}
+                on_input={confirm.handlers.on_input.clone()}
+                on_submit={confirm.handlers.on_submit.clone()}
+                on_resend={confirm.handlers.on_resend.clone()}
+                is_valid={confirm.is_valid}
             />
-
-            <button type="submit">{ "確認" }</button>
-            <button type="button" onclick={onresend}>{ "確認コード再送信" }</button>
-
-            <p>{ &*message }</p>
-        </form>
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use gloo::utils::document;
-    use std::rc::Rc;
-    use wasm_bindgen_test::*;
-    use yew::Renderer;
-
-    wasm_bindgen_test_configure!(run_in_browser);
-
-    #[allow(dead_code)]
-    #[wasm_bindgen_test]
-    fn it_renders_confirm_page() {
-        let div = document().create_element("div").unwrap();
-        document().body().unwrap().append_child(&div).unwrap();
-
-        // yew::Renderer expects a component that implements `Component`, not a ContextProvider.
-        // So we use an intermediate wrapper component instead.
-        #[function_component(TestWrapper)]
-        fn test_wrapper() -> Html {
-            let message = use_state(|| Rc::new("".to_string()));
-
-            let email = use_state_eq(|| Rc::new("test@example.com".to_string()));
-            let session = use_state_eq(|| Rc::new("".to_string()));
-            let ctx = AuthContext {
-                message,
-                email,
-                session,
-            };
-            html! {
-                <ContextProvider<AuthContext> context={ctx}>
-                    <SignupConfirmPage />
-                </ContextProvider<AuthContext>>
-            }
-        }
-
-        Renderer::<TestWrapper>::with_root(div.into()).render();
-
-        let body = document().body().unwrap().inner_html();
-        assert!(
-            body.contains("確認コード"),
-            "ページに '確認コード' が含まれていません"
-        );
+        </Layout>
     }
 }

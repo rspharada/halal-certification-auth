@@ -7,7 +7,9 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 // 各ページを use でインポート
+
 use crate::features::auth::pages::signup::confirm::SignupConfirmPage;
+use crate::features::auth::pages::signup::confirm_complete::SignupConfirmCompletePage;
 use crate::features::auth::pages::signup::index::SignupPage;
 
 use crate::features::auth::pages::signin::index::SigninPage;
@@ -25,6 +27,9 @@ pub enum Route {
 
     #[at("/auth/signup/confirm")]
     SignupConfirm,
+
+    #[at("/auth/signup/confirm/complete")]
+    SignupConfirmComplete,
 
     #[at("/auth/signin")]
     Signin,
@@ -51,6 +56,7 @@ pub fn switch(route: Route) -> Html {
     match route {
         Route::Signup => html! { <SignupPage /> },
         Route::SignupConfirm => html! { <SignupConfirmPage/> },
+        Route::SignupConfirmComplete => html! { <SignupConfirmCompletePage /> },
         Route::Signin => html! { <SigninPage /> },
         Route::SigninMfa => {
             html! { <SigninMfaPage/> }
