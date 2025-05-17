@@ -5,7 +5,9 @@
 use crate::components::error_message::ErrorMessage;
 use crate::components::input_field::InputField;
 use crate::features::auth::hooks::use_signin_state::use_signin_state;
+use crate::routes::Route;
 use yew::prelude::*;
+use yew_router::components::Link;
 
 #[function_component(SigninForm)]
 pub fn signin_form() -> Html {
@@ -38,6 +40,15 @@ pub fn signin_form() -> Html {
             <button type="submit" class="form-submit" disabled={!signin.is_valid}>
                 { "ログイン" }
             </button>
+
+            <div class="form-links">
+                <Link<Route> to={Route::Signup} classes="form-link">
+                    { "アカウントをお持ちでない方はこちら" }
+                </Link<Route>>
+                <Link<Route> to={Route::PasswordResetRequest} classes="form-link">
+                    { "パスワードを忘れた方はこちら" }
+                </Link<Route>>
+            </div>
         </form>
     }
 }

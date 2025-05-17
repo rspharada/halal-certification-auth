@@ -1,7 +1,8 @@
-from shared.common import get_secret_hash, build_response
+from shared.common import get_secret_hash, build_response, validate_password, validate_email
 import json
 import os
 import boto3
+import re
 
 cognito = boto3.client("cognito-idp")
 
@@ -11,11 +12,17 @@ CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
 def lambda_handler(event, context):
     try:
         body = json.loads(event.get("body", "{}"))
-        email = body.get("email")
-        password = body.get("password")
+        email = body.get("email", "")
+        password = body.get("password", "")
 
-        if not email or not password:
-            return build_response(400, {"error": "Missing email or password"})
+        # バリデーション
+        email_error = validate_email(email)
+        password_error = validate_password(password)
+
+        if email_error:
+            return build_response(400, {"error": email_error})
+        if password_error:
+            return build_response(400, {"error": password_error})
 
         response = cognito.sign_up(
             ClientId=CLIENT_ID,
@@ -28,7 +35,7 @@ def lambda_handler(event, context):
         )
 
         return build_response(200, {
-            "message": "仮登録が完了しました（クライアントシークレット使用）",
+            "message": "仮登録が完了しました",
             "user_sub": response["UserSub"]
         })
 

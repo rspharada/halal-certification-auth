@@ -1,4 +1,4 @@
-from shared.common import get_secret_hash, build_response
+from shared.common import get_secret_hash, build_response, validate_email, validate_code
 import os
 import json
 import boto3
@@ -16,15 +16,25 @@ scheme = "http" if ENV == "local" else "https"
 def lambda_handler(event, context):
     try:
         body = json.loads(event.get("body", "{}"))
-        email = body.get("email")
-        code = body.get("code")
-        session = body.get("session")
+        email = body.get("email", "").strip()
+        code = body.get("code", "").strip()
+        session = body.get("session", "").strip()
 
+        # 入力チェック
         if not email or not code or not session:
             return build_response(400, {"error": "Missing email, code or session"})
 
+        # バリデーションチェック
+        email_error = validate_email(email)
+        code_error = validate_code(code)
+
+        if email_error:
+            return build_response(400, {"error": email_error})
+        if code_error:
+            return build_response(400, {"error": code_error})
+
+        # 認証チャレンジへの応答
         response = cognito.respond_to_auth_challenge(
-            # UserPoolId=USER_POOL_ID,
             ClientId=CLIENT_ID,
             ChallengeName="EMAIL_OTP",
             ChallengeResponses={
@@ -34,10 +44,11 @@ def lambda_handler(event, context):
             },
             Session=session
         )
-        print(response)
+
         tokens = response["AuthenticationResult"]
         redirect_url = f"{scheme}://www.{DOMAIN}{REDIRECT_PATH}"
         secure_flag = "Secure;" if ENV != "local" else ""
+
         return {
             "statusCode": 200,
             "multiValueHeaders": {
@@ -54,7 +65,7 @@ def lambda_handler(event, context):
         }
 
     except cognito.exceptions.NotAuthorizedException:
-        return build_response(401, {"error": "認証コードが正しくありません"})
+        return build_response(401, {"error": "確認コードが正しくありません"})
 
     except Exception as e:
         return build_response(500, {"error": str(e)})

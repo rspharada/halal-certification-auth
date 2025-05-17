@@ -2,7 +2,9 @@ use crate::components::error_message::ErrorMessage;
 use crate::components::input_field::InputField;
 use crate::components::password_rules::PasswordRules;
 use crate::features::auth::hooks::use_signup_state::use_signup_state;
+use crate::routes::Route;
 use yew::prelude::*;
+use yew_router::components::Link;
 
 /// サインアップフォームコンポーネント
 #[function_component(SignupForm)]
@@ -58,6 +60,11 @@ pub fn signup_form() -> Html {
             <button type="submit" class="form-submit" disabled={!signup.is_valid}>
                 { "登録" }
             </button>
+            <div class="form-link-right">
+                <Link<Route> to={Route::Signin} classes="back-to">
+                    { "サインインに戻る" }
+                </Link<Route>>
+            </div>
         </form>
     }
 }

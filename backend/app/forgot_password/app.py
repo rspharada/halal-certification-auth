@@ -1,7 +1,7 @@
 import boto3
 import json
 import os
-from shared.common import get_secret_hash, build_response
+from shared.common import get_secret_hash, build_response, validate_email
 
 cognito = boto3.client("cognito-idp")
 
@@ -11,10 +11,15 @@ CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
 def lambda_handler(event, context):
     try:
         body = json.loads(event.get("body", "{}"))
-        email = body.get("email")
+        email = body.get("email", "").strip()
 
         if not email:
             return build_response(400, {"error": "Missing email"})
+
+        # メール形式バリデーション
+        email_error = validate_email(email)
+        if email_error:
+            return build_response(400, {"error": email_error})
 
         # パスワード再設定コードの送信
         response = cognito.forgot_password(
@@ -24,7 +29,7 @@ def lambda_handler(event, context):
         )
 
         return build_response(200, {
-            "message": "パスワード再設定用コードを送信しました",
+            "message": "パスワード再設定用の確認コードを送信しました",
             "delivery": response.get("CodeDeliveryDetails")
         })
 

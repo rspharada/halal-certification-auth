@@ -1,4 +1,4 @@
-from shared.common import get_secret_hash, build_response
+from shared.common import get_secret_hash, build_response, validate_email
 import boto3
 import json
 import os
@@ -11,10 +11,15 @@ CLIENT_SECRET = os.environ["COGNITO_APP_CLIENT_SECRET"]
 def lambda_handler(event, context):
     try:
         body = json.loads(event.get("body", "{}"))
-        email = body.get("email")
+        email = body.get("email", "").strip()
 
         if not email:
             return build_response(400, {"error": "Missing email"})
+
+        # メールアドレスのバリデーション（形式チェック）
+        email_error = validate_email(email)
+        if email_error:
+            return build_response(400, {"error": email_error})
 
         # 認証コードの再送
         response = cognito.resend_confirmation_code(
