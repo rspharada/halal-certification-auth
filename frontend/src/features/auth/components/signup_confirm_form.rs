@@ -40,8 +40,8 @@ pub fn signup_confirm_form(props: &SignupConfirmFormProps) -> Html {
             </div>
 
             <div class="form-link-right">
-                <Link<Route> to={Route::Signin} classes="back-to-signin">
-                    { "サインイン画面に戻る" }
+                <Link<Route> to={Route::Signin} classes="back-to">
+                    { "サインインに戻る" }
                 </Link<Route>>
             </div>
         </form>

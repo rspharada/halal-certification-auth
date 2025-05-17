@@ -34,7 +34,7 @@ pub enum Route {
     #[at("/auth/signin")]
     Signin,
 
-    #[at("/auth/mfa/")]
+    #[at("/auth/signin/mfa/")]
     SigninMfa,
 
     #[at("/auth/forgot")]

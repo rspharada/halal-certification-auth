@@ -22,7 +22,7 @@ pub fn signup_confirm_complete() -> Html {
                 { "ご利用ください。" }
             </p>
 
-            <Link<Route> to={Route::Signin} classes="back-to-signin">
+            <Link<Route> to={Route::Signin} classes="back-to">
                 { "サインイン画面に進む" }
             </Link<Route>>
         </div>
