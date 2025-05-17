@@ -7,15 +7,15 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 // 各ページを use でインポート
-use crate::pages::auth::signup::confirm::SignupConfirmPage;
-use crate::pages::auth::signup::index::SignupPage;
+use crate::features::auth::pages::signup::confirm::SignupConfirmPage;
+use crate::features::auth::pages::signup::index::SignupPage;
 
-use crate::pages::auth::signin::index::SigninPage;
-use crate::pages::auth::signin::mfa::SigninMfaPage;
+use crate::features::auth::pages::signin::index::SigninPage;
+use crate::features::auth::pages::signin::mfa::SigninMfaPage;
 
-use crate::pages::auth::password_reset::mfa::PasswordResetMfaPage;
-use crate::pages::auth::password_reset::request::PasswordResetRequestPage;
-use crate::pages::auth::password_reset::reset::PasswordResetPage;
+use crate::features::auth::pages::password_reset::mfa::PasswordResetMfaPage;
+use crate::features::auth::pages::password_reset::request::PasswordResetRequestPage;
+use crate::features::auth::pages::password_reset::reset::PasswordResetPage;
 
 /// アプリ内のルーティング定義
 #[derive(Routable, Clone, PartialEq, Debug)]

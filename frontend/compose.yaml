@@ -13,6 +13,6 @@ services:
       - .:/app
     environment:
       - RUST_LOG=info
-    command: [ "trunk", "serve", "--address", "0.0.0.0", "--port", "3001" ]
+    command: [ "trunk", "serve", "--no-autoreload", "--address", "0.0.0.0", "--port", "3001" ]
     networks:
       - halmark_network

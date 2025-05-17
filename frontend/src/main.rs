@@ -1,6 +1,6 @@
 mod app;
 mod components;
-mod pages;
+mod features;
 mod routes;
 mod types;
 mod utils;
