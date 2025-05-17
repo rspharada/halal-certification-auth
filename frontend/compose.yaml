@@ -13,6 +13,7 @@ services:
       - .:/app
     environment:
       - RUST_LOG=info
+      - APP_REDIRECT_URL=http://www.halal.local/
     command: [ "trunk", "serve", "--no-autoreload", "--address", "0.0.0.0", "--port", "3001" ]
     networks:
       - halmark_network
